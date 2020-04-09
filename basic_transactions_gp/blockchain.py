@@ -119,7 +119,7 @@ class Blockchain(object):
         """
         guess = f"{block_string}{proof}".encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:3] == "000"
+        return guess_hash[:6] == "000000"
 
 
 # Instantiate our Node
@@ -205,6 +205,28 @@ def new_transaction():
     response = {'message': f"Transaction will be added to Block {index}"}
     return jsonify(response), 200
 
+@app.route('/wallet/<user>', methods=['GET'])
+def wallet(user="chase"):
+    balance = 0
+    remove_funds = []
+    add_funds = []   
+
+    for block in blockchain.chain:
+        for transaction in block["transactions"]:
+            if transaction['sender'] == user:
+                balance -= transaction['amount']
+                remove_funds.append(transaction)
+            if transaction['recipient'] == user:
+                balance += transaction['amount']
+                add_funds.append(transaction)
+    response = {
+        "user": user,
+        "balance": balance,
+        "negative_transactions": remove_funds,
+        "positive_transactions": add_funds
+    }
+    
+    return jsonify(response), 200
 
 # Run the program on port 5000
 if __name__ == '__main__':
